@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSS 뉴스 브리핑 POC 요약</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f2f4f6;
+    color: #191f28;
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 640px; margin: 0 auto; }
+
+  /* 헤더 */
+  .header {
+    background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+    color: #fff;
+    border-radius: 24px;
+    padding: 40px 32px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+  .header .subtitle { font-size: 15px; opacity: 0.85; }
+  .header .date { font-size: 13px; opacity: 0.6; margin-top: 12px; }
+
+  /* 카드 */
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .num {
+    background: #3182f6;
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3182f6;
+    margin: 20px 0 10px;
+  }
+  .card p, .card li {
+    font-size: 14px;
+    color: #4e5968;
+    line-height: 1.7;
+  }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+
+  /* 한 줄 정의 박스 */
+  .define-box {
+    background: #f0f6ff;
+    border-left: 4px solid #3182f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1b4da1;
+    line-height: 1.7;
+  }
+
+  /* 플로우 차트 */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 16px 0;
+  }
+  .flow-step {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 16px 20px;
+    position: relative;
+  }
+  .flow-step.input { background: #e8f3ff; border: 2px solid #3182f6; }
+  .flow-step.process { background: #fff8e1; border: 2px solid #f59e0b; }
+  .flow-step.output { background: #e8faf0; border: 2px solid #10b981; }
+  .flow-step .label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .flow-step.input .label { color: #3182f6; }
+  .flow-step.process .label { color: #f59e0b; }
+  .flow-step.output .label { color: #10b981; }
+  .flow-step .text { font-size: 14px; font-weight: 600; }
+  .flow-arrow {
+    text-align: center;
+    font-size: 20px;
+    color: #8b95a1;
+    padding: 4px 0;
+  }
+
+  /* 테이블 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th {
+    background: #f8f9fa;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    color: #4e5968;
+    border-bottom: 2px solid #e5e8eb;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f2f4f6;
+    color: #4e5968;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* 코드 */
+  .code-block {
+    background: #1e2a3a;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    overflow-x: auto;
+    line-height: 1.8;
+    margin: 12px 0;
+  }
+  .code-block .comment { color: #64748b; }
+  .code-block .cmd { color: #7dd3fc; }
+  .code-block .arg { color: #86efac; }
+
+  /* 태그 */
+  .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px 4px 2px 0;
+  }
+  .tag.blue { background: #e8f3ff; color: #3182f6; }
+  .tag.green { background: #e8faf0; color: #10b981; }
+  .tag.yellow { background: #fff8e1; color: #f59e0b; }
+  .tag.red { background: #ffeef0; color: #f04452; }
+  .tag.gray { background: #f2f4f6; color: #6b7684; }
+
+  /* 결과 수치 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .stat-box {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-box .value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #3182f6;
+  }
+  .stat-box .label {
+    font-size: 12px;
+    color: #8b95a1;
+    margin-top: 4px;
+  }
+
+  /* 파일 트리 */
+  .file-tree {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 2;
+    color: #4e5968;
+  }
+  .file-tree .dir { color: #3182f6; font-weight: 600; }
+  .file-tree .file { color: #6b7684; }
+  .file-tree .desc { color: #8b95a1; font-style: italic; }
+
+  /* 확장 기능 카드 */
+  .ext-card {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 16px;
+    margin: 10px 0;
+  }
+  .ext-card .ext-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ext-card .ext-desc { font-size: 13px; color: #6b7684; }
+  .ext-card .ext-schedule {
+    font-size: 12px;
+    color: #8b95a1;
+    margin-top: 8px;
+  }
+
+  /* 구분선 */
+  .divider {
+    border: none;
+    border-top: 1px solid #e5e8eb;
+    margin: 20px 0;
+  }
+
+  /* 푸터 */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: #8b95a1;
+    font-size: 12px;
+  }
+
+  /* 급상승 키워드 */
+  .surge-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f2f4f6;
+  }
+  .surge-item:last-child { border-bottom: none; }
+  .surge-keyword { font-weight: 700; font-size: 14px; }
+  .surge-count { font-size: 13px; color: #8b95a1; }
+  .surge-ratio {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f04452;
+  }
+
+  /* 노션 링크 */
+  .notion-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .notion-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: #191f28;
+    transition: background 0.2s;
+  }
+  .notion-link:hover { background: #e8f3ff; }
+  .notion-link .icon { font-size: 20px; }
+  .notion-link .info { flex: 1; }
+  .notion-link .title { font-size: 14px; font-weight: 600; }
+  .notion-link .desc { font-size: 12px; color: #8b95a1; }
+  .notion-link .arrow { color: #8b95a1; font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <h1>RSS 뉴스 브리핑 POC</h1>
+    <div class="subtitle">Claude Code + Notion MCP 자동화 시스템</div>
+    <div class="date">2026.04.16 작업 완료</div>
+  </div>
+
+  <!-- 1. POC 한 줄 정의 -->
+  <div class="card">
+    <h2><span class="num">1</span> POC 한 줄 정의</h2>
+    <div class="define-box">
+      한국 주요 언론사 RSS 피드를 수집하여 42개 키워드로 자동 필터링·요약한 뒤,
+      노션 DB에 저장하고 뉴스레터·급상승 알림·주간 리포트·심층 브리핑을 자동 생성하는 시스템
+    </div>
+
+    <div class="flow">
+      <div class="flow-step input">
+        <div class="label">INPUT 입력</div>
+        <div class="text">RSS 피드 10개 (연합뉴스, 매일경제, 한국경제, 지디넷, 조선, 경향)</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step process">
+        <div class="label">PROCESS 처리</div>
+        <div class="text">키워드 매칭(42개) → 중복 제거 → 카테고리/중요도 분류</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step output">
+        <div class="label">OUTPUT 출력</div>
+        <div class="text">노션 DB 저장 + 뉴스레터 + 급상승 알림 + 주간 리포트 + 심층 브리핑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 사용 기술 -->
+  <div class="card">
+    <h2><span class="num">2</span> 사용 기술</h2>
+    <table>
+      <tr><th>도구</th><th>용도</th></tr>
+      <tr><td>Node.js + rss-parser</td><td>RSS 피드 수집 및 XML 파싱</td></tr>
+      <tr><td>Claude Code</td><td>전체 파이프라인 구축, 코드 생성</td></tr>
+      <tr><td>Notion MCP</td><td>노션 DB에 기사 저장, 페이지 생성</td></tr>
+      <tr><td>CronCreate</td><td>매일/매주 자동 실행 스케줄링</td></tr>
+    </table>
+  </div>
+
+  <!-- 3. RSS 피드 소스 -->
+  <div class="card">
+    <h2><span class="num">3</span> RSS 피드 소스 (10개)</h2>
+    <table>
+      <tr><th>언론사</th><th>카테고리</th><th>상태</th></tr>
+      <tr><td>연합뉴스 전체</td><td><span class="tag blue">종합</span></td><td>OK</td></tr>
+      <tr><td>연합뉴스 정치</td><td><span class="tag blue">정치</span></td><td>OK</td></tr>
+      <tr><td>연합뉴스 경제</td><td><span class="tag green">경제</span></td><td>OK</td></tr>
+      <tr><td>연합뉴스 국제</td><td><span class="tag yellow">국제</span></td><td>OK</td></tr>
+      <tr><td>조선일보</td><td><span class="tag blue">종합</span></td><td>OK</td></tr>
+      <tr><td>경향신문</td><td><span class="tag blue">종합</span></td><td>OK</td></tr>
+      <tr><td>매일경제</td><td><span class="tag green">경제</span></td><td>OK</td></tr>
+      <tr><td>한국경제 경제</td><td><span class="tag green">경제</span></td><td>OK</td></tr>
+      <tr><td>한국경제 IT</td><td><span class="tag red">기술/AI</span></td><td>OK</td></tr>
+      <tr><td>지디넷코리아</td><td><span class="tag red">기술/AI</span></td><td>OK</td></tr>
+    </table>
+    <p style="font-size:12px; color:#8b95a1; margin-top:8px;">
+      * KBS, SBS, MBC 등 방송사 RSS는 2025~2026 기준 서비스 종료 확인
+    </p>
+  </div>
+
+  <!-- 4. 키워드 필터링 -->
+  <div class="card">
+    <h2><span class="num">4</span> 키워드 필터링 (6개 카테고리, 42개)</h2>
+    <table>
+      <tr><th>카테고리</th><th>키워드</th></tr>
+      <tr>
+        <td><span class="tag blue">한국 정치</span></td>
+        <td style="font-size:12px;">추경, 민생지원금, 개헌, 지방선거, 김건희 재판, 이재명 대통령</td>
+      </tr>
+      <tr>
+        <td><span class="tag green">한국 경제</span></td>
+        <td style="font-size:12px;">고유가, 유가 100달러, 경제성장률 하향, 환율 변동성, 부동산, 물가 상승, 삼성전자 노조</td>
+      </tr>
+      <tr>
+        <td><span class="tag yellow">국제 정치</span></td>
+        <td style="font-size:12px;">호르무즈 해협 봉쇄, 이란 전쟁, 트럼프 2기, 유럽 정치 위기, 헝가리 총선, 물 부족 위기</td>
+      </tr>
+      <tr>
+        <td><span class="tag yellow">글로벌 경제</span></td>
+        <td style="font-size:12px;">IMF 성장률 하향, LNG 가격 급등, 소비자심리 급락, 관세 전쟁, 글로벌 부채 위기</td>
+      </tr>
+      <tr>
+        <td><span class="tag red">기술/AI</span></td>
+        <td style="font-size:12px;">Agentic AI, Claude, Anthropic, AI 반도체, 양자컴퓨팅, AI 벤처투자, AI 윤리</td>
+      </tr>
+      <tr>
+        <td><span class="tag gray">스포츠</span></td>
+        <td style="font-size:12px;">KBO, MLB, EPL, UEFA 챔피언스리그, NBA, 2026 월드컵, 손흥민, 이강인, 김민재, K리그, NFL, F1</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 5. 실행 결과 -->
+  <div class="card">
+    <h2><span class="num">5</span> 실행 결과 (2026.04.16)</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="value">809</div>
+        <div class="label">총 수집 기사</div>
+      </div>
+      <div class="stat-box">
+        <div class="value">86</div>
+        <div class="label">키워드 매칭 기사</div>
+      </div>
+      <div class="stat-box">
+        <div class="value">10/10</div>
+        <div class="label">RSS 피드 성공</div>
+      </div>
+      <div class="stat-box">
+        <div class="value">8</div>
+        <div class="label">급상승 키워드</div>
+      </div>
+    </div>
+
+    <h3>급상승 키워드 감지 결과</h3>
+    <div class="surge-item">
+      <span class="surge-keyword">지방선거</span>
+      <span class="surge-count">오늘 24회</span>
+      <span class="surge-ratio">24.0x</span>
+    </div>
+    <div class="surge-item">
+      <span class="surge-keyword">이재명 대통령</span>
+      <span class="surge-count">오늘 20회</span>
+      <span class="surge-ratio">20.0x</span>
+    </div>
+    <div class="surge-item">
+      <span class="surge-keyword">이란 전쟁</span>
+      <span class="surge-count">오늘 19회</span>
+      <span class="surge-ratio">19.0x</span>
+    </div>
+    <div class="surge-item">
+      <span class="surge-keyword">KBO</span>
+      <span class="surge-count">오늘 5회</span>
+      <span class="surge-ratio">5.0x</span>
+    </div>
+    <div class="surge-item">
+      <span class="surge-keyword">추경</span>
+      <span class="surge-count">오늘 4회</span>
+      <span class="surge-ratio">4.0x</span>
+    </div>
+  </div>
+
+  <!-- 6. 확장 기능 4개 -->
+  <div class="card">
+    <h2><span class="num">6</span> 확장 기능 (4개)</h2>
+
+    <div class="ext-card">
+      <div class="ext-title">
+        <span style="font-size:18px;">A</span>
+        일일 뉴스레터 초안
+      </div>
+      <div class="ext-desc">
+        매일 수집된 기사를 "헤드라인 + 카테고리별 1줄 요약 + 급상승 키워드" 형식으로 자동 작성.
+        노션 페이지에 저장하여 바로 공유 가능.
+      </div>
+      <div class="ext-schedule">실행 주기: 매일 08:00</div>
+    </div>
+
+    <div class="ext-card">
+      <div class="ext-title">
+        <span style="font-size:18px;">D</span>
+        키워드 급상승 알림
+      </div>
+      <div class="ext-desc">
+        오늘 키워드 등장 횟수를 최근 7일 평균과 비교.
+        2배 이상 급증한 키워드를 자동 감지하여 태깅.
+      </div>
+      <div class="ext-schedule">실행 주기: 매일 수집 직후 자동</div>
+    </div>
+
+    <div class="ext-card">
+      <div class="ext-title">
+        <span style="font-size:18px;">C</span>
+        주간 트렌드 리포트
+      </div>
+      <div class="ext-desc">
+        일주일간 축적된 기사를 분석하여 "Top 5 키워드 + 카테고리별 핵심 이슈 3개"를
+        한 페이지로 정리.
+      </div>
+      <div class="ext-schedule">실행 주기: 매주 일요일</div>
+    </div>
+
+    <div class="ext-card">
+      <div class="ext-title">
+        <span style="font-size:18px;">G</span>
+        요일별 심층 브리핑
+      </div>
+      <div class="ext-desc">
+        요일마다 다른 카테고리를 집중 분석.<br>
+        월=경제, 화=정치, 수=기술, 목=국제, 금=스포츠
+      </div>
+      <div class="ext-schedule">실행 주기: 평일 매일 (요일별 카테고리 자동 전환)</div>
+    </div>
+  </div>
+
+  <!-- 7. 프로젝트 구조 -->
+  <div class="card">
+    <h2><span class="num">7</span> 프로젝트 구조</h2>
+    <div class="file-tree">
+      <span class="dir">rss-news-briefing/</span><br>
+      ├── <span class="file">config.js</span> <span class="desc">← RSS 10개, 키워드 42개, 노션 DB ID</span><br>
+      ├── <span class="file">rss-fetcher.js</span> <span class="desc">← RSS 수집 + 키워드 매칭 + 중복 제거</span><br>
+      ├── <span class="file">notion-helpers.js</span> <span class="desc">← 뉴스레터/급상승/리포트/브리핑 생성</span><br>
+      ├── <span class="file">run.js</span> <span class="desc">← 메인 실행 (daily/weekly)</span><br>
+      ├── <span class="file">notion-sync.js</span> <span class="desc">← 노션 MCP 연동</span><br>
+      ├── <span class="file">package.json</span> <span class="desc">← npm scripts</span><br>
+      └── <span class="dir">output/</span> <span class="desc">← 결과물 저장 폴더</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">*-articles.json</span> <span class="desc">← 필터링된 기사</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">*-newsletter.md</span> <span class="desc">← 뉴스레터 초안</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">*-surges.json</span> <span class="desc">← 급상승 키워드</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">*-weekly-report.md</span> <span class="desc">← 주간 리포트</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">*-deep-*.md</span> <span class="desc">← 심층 브리핑</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="file">history.json</span> <span class="desc">← 7일 키워드 히스토리</span>
+    </div>
+  </div>
+
+  <!-- 8. 실행 명령어 -->
+  <div class="card">
+    <h2><span class="num">8</span> 실행 명령어</h2>
+    <div class="code-block">
+      <span class="comment"># 일일 전체 실행 (뉴스레터 + 급상승 + 심층)</span><br>
+      <span class="cmd">npm run</span> <span class="arg">daily</span><br><br>
+      <span class="comment"># 주간 트렌드 리포트</span><br>
+      <span class="cmd">npm run</span> <span class="arg">weekly</span><br><br>
+      <span class="comment"># RSS 피드 테스트</span><br>
+      <span class="cmd">npm run</span> <span class="arg">test</span><br><br>
+      <span class="comment"># 노션 동기화 프롬프트 생성</span><br>
+      <span class="cmd">npm run</span> <span class="arg">notion:articles</span><br>
+      <span class="cmd">npm run</span> <span class="arg">notion:newsletter</span>
+    </div>
+  </div>
+
+  <!-- 9. 노션 연동 결과 -->
+  <div class="card">
+    <h2><span class="num">9</span> 노션 연동 결과</h2>
+    <div class="notion-links">
+      <a class="notion-link" href="https://www.notion.so/cb67866aa16b4252983bb86ff4fd2f75" target="_blank">
+        <span class="icon">📰</span>
+        <div class="info">
+          <div class="title">뉴스 아카이브 DB</div>
+          <div class="desc">기사 8건 저장 (주요 3건 + 카테고리별 대표 5건)</div>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="notion-link" href="https://www.notion.so/34401247be3281888482f097e60ac9ae" target="_blank">
+        <span class="icon">📮</span>
+        <div class="info">
+          <div class="title">[A] 2026-04-16 뉴스레터 초안</div>
+          <div class="desc">카테고리별 요약 + 급상승 키워드 테이블</div>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="notion-link" href="https://www.notion.so/34401247be328109be2dd6ad23b48e5e" target="_blank">
+        <span class="icon">🔍</span>
+        <div class="info">
+          <div class="title">[G] 목요일 심층 브리핑: 국제 정치</div>
+          <div class="desc">국제 정치 15건 분석 + 키워드 분포</div>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+      <a class="notion-link" href="https://www.notion.so/34401247be3281bf8f57f862cc34625e" target="_blank">
+        <span class="icon">📊</span>
+        <div class="info">
+          <div class="title">[C] 주간 트렌드 리포트</div>
+          <div class="desc">Top 5 키워드 + 카테고리별 핵심 이슈</div>
+        </div>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 10. 전체 데이터 흐름 -->
+  <div class="card">
+    <h2><span class="num">10</span> 전체 데이터 흐름</h2>
+    <div style="font-family: 'SF Mono', monospace; font-size: 13px; line-height: 2.2; background: #f8f9fa; border-radius: 12px; padding: 20px;">
+      <span style="color:#3182f6; font-weight:700;">RSS 10개 피드</span> (연합·매경·한경·지디넷·조선·경향)<br>
+      &nbsp;&nbsp;↓ <span style="color:#8b95a1;">수집</span><br>
+      <span style="font-weight:700;">809건</span> 전체 기사<br>
+      &nbsp;&nbsp;↓ <span style="color:#8b95a1;">24시간 필터</span><br>
+      <span style="font-weight:700;">785건</span><br>
+      &nbsp;&nbsp;↓ <span style="color:#8b95a1;">42개 키워드 매칭</span><br>
+      <span style="font-weight:700;">94건</span><br>
+      &nbsp;&nbsp;↓ <span style="color:#8b95a1;">제목 기반 중복 제거</span><br>
+      <span style="color:#10b981; font-weight:700;">86건</span> 최종 필터링<br>
+      &nbsp;&nbsp;↓ <span style="color:#8b95a1;">카테고리/중요도 자동 분류</span><br>
+      <span style="color:#f59e0b; font-weight:700;">노션 DB 저장</span> + <span style="color:#f04452; font-weight:700;">4개 확장 기능 자동 생성</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    RSS 뉴스 브리핑 POC · Claude Code + Notion MCP · 2026.04.16
+  </div>
+
+</div>
+</body>
+</html>

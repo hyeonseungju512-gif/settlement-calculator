@@ -1,0 +1,25 @@
+{
+  "name": "rss-news-briefing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "daily": "node run.js daily",
+    "weekly": "node run.js weekly",
+    "newsletter": "node run.js newsletter",
+    "surge": "node run.js surge",
+    "deep": "node run.js deep",
+    "notion:articles": "node notion-sync.js articles",
+    "notion:newsletter": "node notion-sync.js newsletter",
+    "notion:weekly": "node notion-sync.js weekly",
+    "notion:deep": "node notion-sync.js deep",
+    "test": "node test-feeds.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "rss-parser": "^3.13.0"
+  }
+}

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대출 계산기</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f2f4f6;
+            display: flex;
+            justify-content: center;
+            padding: 40px 16px;
+            color: #191f28;
+        }
+        .container {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 32px; }
+        .header-icon {
+            width: 52px; height: 52px;
+            background: #e8f3ff;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .subtitle { font-size: 14px; color: #8b95a1; }
+
+        /* Input sections */
+        .input-section { margin-bottom: 28px; }
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .step-badge {
+            width: 22px; height: 22px;
+            background: #3182f6;
+            color: #fff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .section-label label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #191f28;
+        }
+        .hint {
+            font-size: 13px;
+            color: #8b95a1;
+            margin-bottom: 10px;
+            padding-left: 30px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e5e8eb;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #191f28;
+            background: #fff;
+        }
+        input:focus, select:focus {
+            border-color: #3182f6;
+            box-shadow: 0 0 0 3px rgba(49,130,246,0.1);
+        }
+        input.error {
+            border-color: #f04452;
+            box-shadow: 0 0 0 3px rgba(240,68,82,0.1);
+        }
+        .validation-msg {
+            font-size: 12px;
+            color: #f04452;
+            margin-top: 6px;
+            padding-left: 4px;
+            display: none;
+        }
+        .validation-msg.show { display: block; }
+
+        .amount-display {
+            font-size: 13px;
+            color: #3182f6;
+            font-weight: 600;
+            margin-top: 6px;
+            padding-left: 4px;
+            min-height: 20px;
+        }
+
+        /* Quick chips */
+        .quick-chips {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .quick-chips button {
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1.5px solid #e5e8eb;
+            background: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4e5968;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .quick-chips button:hover {
+            border-color: #3182f6;
+            color: #3182f6;
+            background: #f8fbff;
+        }
+        .quick-chips button.active {
+            background: #e8f3ff;
+            border-color: #3182f6;
+            color: #3182f6;
+            font-weight: 600;
+        }
+
+        /* Term row */
+        .term-row {
+            display: flex;
+            gap: 10px;
+        }
+        .term-row input { flex: 1; }
+        .term-row select { width: 90px; flex-shrink: 0; }
+
+        /* Method cards */
+        .method-cards { display: flex; flex-direction: column; gap: 10px; }
+        .method-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border: 1.5px solid #e5e8eb;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .method-card:hover {
+            border-color: #b8d4f8;
+            background: #fcfdff;
+        }
+        .method-card.selected {
+            border-color: #3182f6;
+            background: #f8fbff;
+            box-shadow: 0 0 0 3px rgba(49,130,246,0.08);
+        }
+        .method-card-visual {
+            flex-shrink: 0;
+        }
+        .method-card-content { flex: 1; }
+        .method-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #191f28;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .method-badge {
+            font-size: 11px;
+            font-weight: 600;
+            background: #e8f3ff;
+            color: #3182f6;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .method-card-desc {
+            font-size: 13px;
+            color: #8b95a1;
+            margin-top: 2px;
+        }
+        .method-check {
+            width: 20px; height: 20px;
+            border: 2px solid #d1d6db;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .method-card.selected .method-check {
+            border-color: #3182f6;
+            background: #3182f6;
+        }
+
+        /* Calculate button */
+        .btn-calculate {
+            width: 100%;
+            padding: 14px;
+            background: #3182f6;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+        .btn-calculate:hover { background: #1b64da; }
+        .btn-calculate:active { transform: scale(0.99); }
+
+        /* Results */
+        .results {
+            display: none;
+            margin-top: 28px;
+        }
+        .results.show {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-hero {
+            text-align: center;
+            padding: 28px 20px;
+            background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+            border-radius: 18px;
+            color: #fff;
+            margin-bottom: 14px;
+        }
+        .result-hero-label {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-bottom: 4px;
+        }
+        .result-hero-amount {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .result-hero-sub {
+            font-size: 12px;
+            opacity: 0.65;
+            margin-top: 4px;
+        }
+
+        .result-summary {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .summary-card {
+            flex: 1;
+            padding: 16px;
+            background: #f8f9fb;
+            border-radius: 14px;
+            text-align: center;
+        }
+        .summary-label {
+            font-size: 13px;
+            color: #8b95a1;
+            margin-bottom: 6px;
+        }
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .summary-value.interest { color: #f04452; }
+        .summary-value.total { color: #191f28; }
+
+        /* Breakdown bar */
+        .breakdown {
+            background: #f8f9fb;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+        .breakdown-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4e5968;
+            margin-bottom: 12px;
+        }
+        .breakdown-bar {
+            display: flex;
+            height: 36px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .bar-principal {
+            background: #00c471;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            transition: width 0.8s ease;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .bar-interest {
+            background: #f04452;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            transition: width 0.8s ease;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .breakdown-legend {
+            display: flex;
+            justify-content: space-between;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4e5968;
+        }
+        .legend-item strong {
+            color: #191f28;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.green { background: #00c471; }
+        .dot.red { background: #f04452; }
+
+        /* Schedule */
+        .schedule-section { margin-top: 4px; }
+        .btn-schedule-toggle {
+            width: 100%;
+            padding: 14px;
+            background: #f8f9fb;
+            color: #4e5968;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-schedule-toggle:hover { background: #f0f2f5; }
+        .toggle-arrow {
+            font-size: 10px;
+            transition: transform 0.3s;
+        }
+        .toggle-arrow.open { transform: rotate(180deg); }
+
+        .schedule-table-wrap {
+            display: none;
+            margin-top: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #3182f6;
+            color: #fff;
+            padding: 10px 6px;
+            text-align: right;
+            font-weight: 600;
+        }
+        th:first-child { text-align: center; border-radius: 10px 0 0 0; }
+        th:last-child { border-radius: 0 10px 0 0; }
+        td {
+            padding: 9px 6px;
+            text-align: right;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 13px;
+            color: #4e5968;
+        }
+        td:first-child { text-align: center; color: #8b95a1; }
+        tr:hover td { background: #f8fbff; }
+        .table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+            border: 1px solid #e5e8eb;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .container { padding: 24px 18px; }
+            .quick-chips button { padding: 6px 10px; font-size: 12px; }
+            .result-hero-amount { font-size: 28px; }
+            .method-card { padding: 12px; }
+            .result-summary { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                    <line x1="8" y1="6" x2="16" y2="6"/>
+                    <circle cx="8" cy="10" r="0.5" fill="#3182f6"/>
+                    <circle cx="12" cy="10" r="0.5" fill="#3182f6"/>
+                    <circle cx="16" cy="10" r="0.5" fill="#3182f6"/>
+                    <circle cx="8" cy="14" r="0.5" fill="#3182f6"/>
+                    <circle cx="12" cy="14" r="0.5" fill="#3182f6"/>
+                    <circle cx="16" cy="14" r="0.5" fill="#3182f6"/>
+                    <line x1="8" y1="18" x2="16" y2="18"/>
+                </svg>
+            </div>
+            <h1>대출 계산기</h1>
+            <p class="subtitle">쉽고 빠르게 대출 상환 계획을 알아보세요</p>
+        </div>
+
+        <!-- Step 1: 대출 금액 -->
+        <section class="input-section">
+            <div class="section-label">
+                <span class="step-badge">1</span>
+                <label>얼마를 빌리시나요?</label>
+            </div>
+            <p class="hint">대출받을 금액을 입력하세요</p>
+            <input type="text" id="principal" placeholder="예: 100,000,000" oninput="onPrincipalInput(this)">
+            <div class="amount-display" id="amountDisplay"></div>
+            <div class="validation-msg" id="principalError">대출 금액을 입력해주세요</div>
+            <div class="quick-chips" id="amountChips">
+                <button type="button" onclick="setAmount(50000000, this)">5천만</button>
+                <button type="button" onclick="setAmount(100000000, this)">1억</button>
+                <button type="button" onclick="setAmount(200000000, this)">2억</button>
+                <button type="button" onclick="setAmount(300000000, this)">3억</button>
+                <button type="button" onclick="setAmount(500000000, this)">5억</button>
+            </div>
+        </section>
+
+        <!-- Step 2: 이자율 -->
+        <section class="input-section">
+            <div class="section-label">
+                <span class="step-badge">2</span>
+                <label>이자율은 얼마인가요?</label>
+            </div>
+            <p class="hint">연 이자율을 입력하세요 (은행에서 안내받은 금리)</p>
+            <input type="number" id="rate" step="0.01" placeholder="예: 3.5">
+            <div class="validation-msg" id="rateError">이자율을 확인해주세요 (0~30%)</div>
+            <div class="quick-chips" id="rateChips">
+                <button type="button" onclick="setRate(3.0, this)">3.0%</button>
+                <button type="button" onclick="setRate(3.5, this)">3.5%</button>
+                <button type="button" onclick="setRate(4.0, this)">4.0%</button>
+                <button type="button" onclick="setRate(4.5, this)">4.5%</button>
+                <button type="button" onclick="setRate(5.0, this)">5.0%</button>
+            </div>
+        </section>
+
+        <!-- Step 3: 대출 기간 -->
+        <section class="input-section">
+            <div class="section-label">
+                <span class="step-badge">3</span>
+                <label>얼마 동안 갚으시나요?</label>
+            </div>
+            <p class="hint">대출 상환 기간을 선택하세요</p>
+            <div class="quick-chips" id="termChips" style="margin-top:0; margin-bottom:10px;">
+                <button type="button" onclick="setTerm(10, this)">10년</button>
+                <button type="button" onclick="setTerm(20, this)">20년</button>
+                <button type="button" onclick="setTerm(30, this)">30년</button>
+                <button type="button" onclick="setTerm(35, this)">35년</button>
+            </div>
+            <div class="term-row">
+                <input type="number" id="term" placeholder="직접 입력">
+                <select id="termUnit">
+                    <option value="year">년</option>
+                    <option value="month">개월</option>
+                </select>
+            </div>
+            <div class="validation-msg" id="termError">기간을 확인해주세요</div>
+        </section>
+
+        <!-- Step 4: 상환 방식 -->
+        <section class="input-section">
+            <div class="section-label">
+                <span class="step-badge">4</span>
+                <label>어떻게 갚으시나요?</label>
+            </div>
+            <p class="hint">상환 방식을 선택하세요</p>
+            <select id="method" style="display:none;">
+                <option value="equal">원리금균등상환</option>
+                <option value="principal">원금균등상환</option>
+                <option value="bullet">만기일시상환</option>
+            </select>
+            <div class="method-cards">
+                <div class="method-card selected" data-value="equal" onclick="selectMethod(this)">
+                    <div class="method-card-visual">
+                        <svg width="48" height="32" viewBox="0 0 48 32">
+                            <rect x="2" y="6" width="7" height="22" rx="2" fill="#3182f6" opacity="0.7"/>
+                            <rect x="12" y="6" width="7" height="22" rx="2" fill="#3182f6" opacity="0.7"/>
+                            <rect x="22" y="6" width="7" height="22" rx="2" fill="#3182f6" opacity="0.7"/>
+                            <rect x="32" y="6" width="7" height="22" rx="2" fill="#3182f6" opacity="0.7"/>
+                            <rect x="42" y="6" width="5" height="22" rx="2" fill="#3182f6" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-card-title">
+                            원리금균등상환
+                            <span class="method-badge">가장 일반적</span>
+                        </div>
+                        <p class="method-card-desc">매달 같은 금액을 갚아요</p>
+                    </div>
+                    <div class="method-check">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="method-card" data-value="principal" onclick="selectMethod(this)">
+                    <div class="method-card-visual">
+                        <svg width="48" height="32" viewBox="0 0 48 32">
+                            <rect x="2" y="2" width="7" height="26" rx="2" fill="#3182f6" opacity="0.7"/>
+                            <rect x="12" y="7" width="7" height="21" rx="2" fill="#3182f6" opacity="0.55"/>
+                            <rect x="22" y="12" width="7" height="16" rx="2" fill="#3182f6" opacity="0.4"/>
+                            <rect x="32" y="17" width="7" height="11" rx="2" fill="#3182f6" opacity="0.3"/>
+                            <rect x="42" y="22" width="5" height="6" rx="2" fill="#3182f6" opacity="0.2"/>
+                        </svg>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-card-title">원금균등상환</div>
+                        <p class="method-card-desc">처음엔 많이, 갈수록 적게 갚아요</p>
+                    </div>
+                    <div class="method-check">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="method-card" data-value="bullet" onclick="selectMethod(this)">
+                    <div class="method-card-visual">
+                        <svg width="48" height="32" viewBox="0 0 48 32">
+                            <rect x="2" y="22" width="7" height="6" rx="2" fill="#3182f6" opacity="0.3"/>
+                            <rect x="12" y="22" width="7" height="6" rx="2" fill="#3182f6" opacity="0.3"/>
+                            <rect x="22" y="22" width="7" height="6" rx="2" fill="#3182f6" opacity="0.3"/>
+                            <rect x="32" y="22" width="7" height="6" rx="2" fill="#3182f6" opacity="0.3"/>
+                            <rect x="42" y="2" width="5" height="26" rx="2" fill="#3182f6" opacity="0.8"/>
+                        </svg>
+                    </div>
+                    <div class="method-card-content">
+                        <div class="method-card-title">만기일시상환</div>
+                        <p class="method-card-desc">이자만 내다가 마지막에 한꺼번에 갚아요</p>
+                    </div>
+                    <div class="method-check">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calculate button -->
+        <button class="btn-calculate" onclick="calculate()">계산하기</button>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <div class="result-hero">
+                <p class="result-hero-label">매달 내야 할 금액</p>
+                <p class="result-hero-amount" id="monthly">0원</p>
+                <p class="result-hero-sub">(첫 달 기준)</p>
+            </div>
+
+            <div class="result-summary">
+                <div class="summary-card">
+                    <p class="summary-label">총 이자</p>
+                    <p class="summary-value interest" id="totalInterest">0원</p>
+                </div>
+                <div class="summary-card">
+                    <p class="summary-label">총 상환 금액</p>
+                    <p class="summary-value total" id="totalPayment">0원</p>
+                </div>
+            </div>
+
+            <div class="breakdown" id="breakdown">
+                <p class="breakdown-title">원금 vs 이자 비율</p>
+                <div class="breakdown-bar">
+                    <div class="bar-principal" id="barPrincipal" style="width:0%"></div>
+                    <div class="bar-interest" id="barInterest" style="width:0%"></div>
+                </div>
+                <div class="breakdown-legend">
+                    <span class="legend-item"><span class="dot green"></span>원금 <strong id="legendPrincipal">0원</strong></span>
+                    <span class="legend-item"><span class="dot red"></span>이자 <strong id="legendInterest">0원</strong></span>
+                </div>
+            </div>
+
+            <div class="schedule-section">
+                <button class="btn-schedule-toggle" onclick="toggleSchedule()">
+                    상환 스케줄 보기
+                    <span class="toggle-arrow" id="toggleArrow">&#9660;</span>
+                </button>
+                <div class="schedule-table-wrap" id="scheduleTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Number formatting =====
+        function formatNumber(el) {
+            let v = el.value.replace(/[^\d]/g, '');
+            el.value = v ? Number(v).toLocaleString('ko-KR') : '';
+        }
+
+        function parsePrincipal() {
+            return Number(document.getElementById('principal').value.replace(/[^\d]/g, ''));
+        }
+
+        function fmt(n) {
+            return Math.round(n).toLocaleString('ko-KR') + '원';
+        }
+
+        // ===== Korean amount display =====
+        function formatKoreanAmount(num) {
+            if (!num || num <= 0) return '';
+            const units = ['', '만', '억', '조'];
+            const parts = [];
+            let remaining = num;
+            let unitIndex = 0;
+            while (remaining > 0) {
+                const part = remaining % 10000;
+                if (part > 0) {
+                    parts.unshift(part.toLocaleString('ko-KR') + units[unitIndex]);
+                }
+                remaining = Math.floor(remaining / 10000);
+                unitIndex++;
+            }
+            return '= ' + parts.join(' ') + ' 원';
+        }
+
+        function onPrincipalInput(el) {
+            formatNumber(el);
+            const num = parsePrincipal();
+            document.getElementById('amountDisplay').textContent = formatKoreanAmount(num);
+            clearError('principal');
+        }
+
+        // ===== Quick chips =====
+        function clearChipActive(containerId) {
+            document.querySelectorAll('#' + containerId + ' button').forEach(b => b.classList.remove('active'));
+        }
+
+        function setAmount(val, btn) {
+            const el = document.getElementById('principal');
+            el.value = val.toLocaleString('ko-KR');
+            document.getElementById('amountDisplay').textContent = formatKoreanAmount(val);
+            clearChipActive('amountChips');
+            btn.classList.add('active');
+            clearError('principal');
+        }
+
+        function setRate(val, btn) {
+            document.getElementById('rate').value = val;
+            clearChipActive('rateChips');
+            btn.classList.add('active');
+            clearError('rate');
+        }
+
+        function setTerm(val, btn) {
+            document.getElementById('term').value = val;
+            document.getElementById('termUnit').value = 'year';
+            clearChipActive('termChips');
+            btn.classList.add('active');
+            clearError('term');
+        }
+
+        // ===== Method card selection =====
+        function selectMethod(card) {
+            document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('method').value = card.dataset.value;
+        }
+
+        // ===== Validation =====
+        function clearError(field) {
+            const input = document.getElementById(field);
+            input.classList.remove('error');
+            const errorEl = document.getElementById(field + 'Error');
+            if (errorEl) errorEl.classList.remove('show');
+        }
+
+        function showError(field) {
+            const input = document.getElementById(field);
+            input.classList.add('error');
+            const errorEl = document.getElementById(field + 'Error');
+            if (errorEl) errorEl.classList.add('show');
+        }
+
+        function validate() {
+            let valid = true;
+            const P = parsePrincipal();
+            const rate = parseFloat(document.getElementById('rate').value);
+            const term = parseInt(document.getElementById('term').value);
+
+            if (!P || P <= 0) { showError('principal'); valid = false; } else { clearError('principal'); }
+            if (isNaN(rate) || rate <= 0 || rate > 30) { showError('rate'); valid = false; } else { clearError('rate'); }
+            if (!term || term <= 0) { showError('term'); valid = false; } else { clearError('term'); }
+
+            return valid;
+        }
+
+        // ===== Calculation (core logic preserved) =====
+        let scheduleData = [];
+
+        function calculate() {
+            if (!validate()) return;
+
+            const P = parsePrincipal();
+            const annualRate = parseFloat(document.getElementById('rate').value);
+            let term = parseInt(document.getElementById('term').value);
+            const termUnit = document.getElementById('termUnit').value;
+            const method = document.getElementById('method').value;
+
+            const months = termUnit === 'year' ? term * 12 : term;
+            const r = annualRate / 100 / 12;
+
+            scheduleData = [];
+            let totalInterest = 0;
+            let firstMonthly = 0;
+            let remaining = P;
+
+            if (method === 'equal') {
+                const monthly = r === 0 ? P / months : P * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+                firstMonthly = monthly;
+                for (let i = 1; i <= months; i++) {
+                    const interest = remaining * r;
+                    const principal = monthly - interest;
+                    remaining -= principal;
+                    totalInterest += interest;
+                    scheduleData.push({ month: i, payment: monthly, principal, interest, remaining: Math.max(remaining, 0) });
+                }
+            } else if (method === 'principal') {
+                const monthlyPrincipal = P / months;
+                for (let i = 1; i <= months; i++) {
+                    const interest = remaining * r;
+                    const payment = monthlyPrincipal + interest;
+                    remaining -= monthlyPrincipal;
+                    totalInterest += interest;
+                    if (i === 1) firstMonthly = payment;
+                    scheduleData.push({ month: i, payment, principal: monthlyPrincipal, interest, remaining: Math.max(remaining, 0) });
+                }
+            } else {
+                const monthlyInterest = P * r;
+                firstMonthly = monthlyInterest;
+                for (let i = 1; i <= months; i++) {
+                    const isLast = i === months;
+                    const payment = isLast ? monthlyInterest + P : monthlyInterest;
+                    const principal = isLast ? P : 0;
+                    totalInterest += monthlyInterest;
+                    scheduleData.push({ month: i, payment, principal, interest: monthlyInterest, remaining: isLast ? 0 : P });
+                }
+            }
+
+            // Update hero
+            animateCount(document.getElementById('monthly'), firstMonthly);
+
+            // Update summary
+            document.getElementById('totalInterest').textContent = fmt(totalInterest);
+            document.getElementById('totalPayment').textContent = fmt(P + totalInterest);
+
+            // Update breakdown bar
+            const principalPct = Math.round(P / (P + totalInterest) * 100);
+            const interestPct = 100 - principalPct;
+            document.getElementById('barPrincipal').style.width = principalPct + '%';
+            document.getElementById('barPrincipal').textContent = principalPct >= 15 ? ('원금 ' + principalPct + '%') : '';
+            document.getElementById('barInterest').style.width = interestPct + '%';
+            document.getElementById('barInterest').textContent = interestPct >= 15 ? ('이자 ' + interestPct + '%') : '';
+            document.getElementById('legendPrincipal').textContent = fmt(P);
+            document.getElementById('legendInterest').textContent = fmt(totalInterest);
+
+            // Show results
+            const resultsEl = document.getElementById('results');
+            resultsEl.classList.remove('show');
+            void resultsEl.offsetWidth; // trigger reflow for animation
+            resultsEl.classList.add('show');
+
+            // Hide schedule
+            document.getElementById('scheduleTable').style.display = 'none';
+            document.getElementById('toggleArrow').classList.remove('open');
+
+            // Scroll to results
+            setTimeout(() => {
+                resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // ===== Count-up animation =====
+        function animateCount(el, target) {
+            const duration = 600;
+            const start = performance.now();
+            function tick(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = fmt(target * eased);
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ===== Schedule =====
+        function toggleSchedule() {
+            const el = document.getElementById('scheduleTable');
+            const arrow = document.getElementById('toggleArrow');
+            if (el.style.display === 'none' || !el.style.display) {
+                renderSchedule();
+                el.style.display = 'block';
+                arrow.classList.add('open');
+            } else {
+                el.style.display = 'none';
+                arrow.classList.remove('open');
+            }
+        }
+
+        function renderSchedule() {
+            let html = '<div class="table-wrap"><table><thead><tr><th>회차</th><th>납입금</th><th>원금</th><th>이자</th><th>잔액</th></tr></thead><tbody>';
+            for (const d of scheduleData) {
+                html += `<tr><td>${d.month}</td><td>${fmt(d.payment)}</td><td>${fmt(d.principal)}</td><td>${fmt(d.interest)}</td><td>${fmt(d.remaining)}</td></tr>`;
+            }
+            html += '</tbody></table></div>';
+            document.getElementById('scheduleTable').innerHTML = html;
+        }
+
+        // ===== Clear chip active on manual input =====
+        document.getElementById('rate').addEventListener('input', function() {
+            clearChipActive('rateChips');
+            clearError('rate');
+        });
+        document.getElementById('term').addEventListener('input', function() {
+            clearChipActive('termChips');
+            clearError('term');
+        });
+    </script>
+</body>
+</html>

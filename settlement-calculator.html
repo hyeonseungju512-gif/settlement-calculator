@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정산 계산기</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f2f4f6;
+  color: #191f28;
+  min-height: 100vh;
+}
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+.container.wide {
+  max-width: 960px;
+}
+.header {
+  text-align: center;
+  padding: 24px 0 20px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: #e5e8eb;
+  border-radius: 12px;
+  padding: 4px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8b95a1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tab-btn.active {
+  background: #fff;
+  color: #191f28;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+  margin-bottom: 16px;
+}
+.input-group {
+  margin-bottom: 14px;
+}
+.input-group label {
+  display: block;
+  font-size: 13px;
+  color: #8b95a1;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #191f28;
+  background: #f8f9fa;
+  outline: none;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+.input-group input:focus {
+  border-color: #3182f6;
+  background: #fff;
+}
+.input-group input::placeholder {
+  color: #c4c9d0;
+}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f2f4f6;
+}
+.result-row:last-child { border-bottom: none; }
+.result-label {
+  font-size: 14px;
+  color: #8b95a1;
+}
+.result-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+}
+.result-value.profit {
+  color: #f04452;
+  font-size: 20px;
+}
+.result-value.negative {
+  color: #1a73e8;
+}
+.fee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.fee-item {
+  background: #f8f9fa;
+  border-radius: 14px;
+  padding: 14px;
+}
+.fee-item label {
+  display: block;
+  font-size: 12px;
+  color: #8b95a1;
+  margin-bottom: 6px;
+}
+.fee-item input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 10px;
+  font-size: 15px;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  color: #191f28;
+}
+.fee-item input:focus {
+  border-color: #3182f6;
+}
+.fee-result {
+  font-size: 13px;
+  color: #3182f6;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+.btn-primary:active {
+  background: #1b6ce5;
+  transform: scale(0.98);
+}
+.btn-primary.editing {
+  background: #f59e0b;
+}
+.btn-primary.editing:active {
+  background: #d97706;
+}
+.edit-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.edit-banner button {
+  background: none;
+  border: 1px solid #92400e;
+  color: #92400e;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-secondary {
+  padding: 10px 18px;
+  background: #f2f4f6;
+  color: #3182f6;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+.btn-secondary:active {
+  background: #e5e8eb;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+  border-bottom: 1px solid #e5e8eb;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f2f4f6;
+  white-space: nowrap;
+}
+.data-table tbody tr:hover {
+  background: #f8f9fa;
+}
+.data-table tbody tr.completed {
+  background: #f2f4f6;
+  opacity: 0.5;
+}
+.data-table tbody tr.completed:hover {
+  background: #ebedf0;
+}
+.cb-complete {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3182f6;
+}
+.data-table .col-profit {
+  color: #f04452;
+  font-weight: 700;
+}
+.data-table .col-profit.negative {
+  color: #1a73e8;
+}
+.data-table .totals-row {
+  border-top: 2px solid #3182f6;
+  background: #f8f9fa;
+  font-weight: 700;
+}
+.data-table .totals-row td {
+  padding: 14px 8px;
+  border-bottom: none;
+}
+.btn-delete {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #8b95a1;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.btn-delete:hover {
+  background: #fff0f0;
+  border-color: #f04452;
+  color: #f04452;
+}
+.btn-edit {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #8b95a1;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.btn-edit:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #d97706;
+}
+.empty-state {
+  text-align: center;
+  padding: 48px 0;
+  color: #8b95a1;
+  font-size: 14px;
+}
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.daily-section {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.daily-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 14px;
+}
+.daily-header:hover {
+  background: #f8f9fa;
+}
+.daily-header .arrow {
+  font-size: 12px;
+  color: #8b95a1;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.daily-header.open .arrow {
+  transform: rotate(90deg);
+}
+.daily-date {
+  font-weight: 700;
+  color: #3182f6;
+}
+.daily-amount {
+  color: #8b95a1;
+  font-size: 13px;
+}
+.daily-profit {
+  font-weight: 700;
+  min-width: 70px;
+  text-align: right;
+}
+.daily-profit.positive { color: #f04452; }
+.daily-profit.negative { color: #1a73e8; }
+.daily-detail {
+  border-top: 1px solid #f2f4f6;
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.daily-detail .data-table td {
+  font-size: 12px;
+  padding: 10px 8px;
+}
+.daily-detail .data-table th {
+  font-size: 11px;
+  padding: 8px;
+}
+.monthly-section {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+}
+.monthly-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f2f4f6;
+}
+.monthly-row:last-child { border-bottom: none; }
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+  margin-bottom: 12px;
+}
+.section-title.mt { margin-top: 24px; }
+.filter-bar {
+  margin-bottom: 16px;
+}
+.filter-select {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b95a1' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  transition: border-color 0.2s ease;
+}
+.filter-select:focus {
+  border-color: #3182f6;
+}
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+  <div class="header">
+    <h1>정산 계산기</h1>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('calc')">계산기</button>
+    <button class="tab-btn" onclick="switchTab('table')">정산표</button>
+    <button class="tab-btn" onclick="switchTab('daily')">일별 정산표</button>
+  </div>
+
+  <!-- 계산기 탭 -->
+  <div id="tab-calc">
+    <div id="editBanner" class="edit-banner hidden">
+      <span>수정 모드</span>
+      <button onclick="cancelEdit()">취소</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">기본 정보</div>
+      <div class="input-group">
+        <label for="nickname">닉네임</label>
+        <input type="text" id="nickname" placeholder="닉네임 입력">
+      </div>
+      <div class="input-group">
+        <label for="rate">테더 시세 (원)</label>
+        <input type="text" id="rate" placeholder="예: 1,450" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label for="krw">원화 금액</label>
+        <input type="text" id="krw" placeholder="예: 1,000,000" inputmode="numeric">
+      </div>
+      <div class="result-row">
+        <span class="result-label">총 USDT</span>
+        <span class="result-value" id="totalUSDT">0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">수수료 설정</div>
+      <div class="fee-grid">
+        <div class="fee-item">
+          <label for="csFee">CS (%)</label>
+          <input type="number" id="csFee" placeholder="0" step="0.1">
+          <div class="fee-result" id="csResult">0 USDT</div>
+        </div>
+        <div class="fee-item">
+          <label for="samgukFee">삼국지 (%)</label>
+          <input type="number" id="samgukFee" placeholder="0" step="0.1">
+          <div class="fee-result" id="samgukResult">0 USDT</div>
+        </div>
+        <div class="fee-item" style="grid-column: span 2;">
+          <label for="refFee">소개자 (%)</label>
+          <input type="number" id="refFee" placeholder="0" step="0.1">
+          <div class="fee-result" id="refResult">0 USDT</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="result-row">
+        <span class="result-label">수익금</span>
+        <span class="result-value profit" id="profitDisplay">0 USDT</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="saveBtn" onclick="saveData()">정산에 반영하기</button>
+  </div>
+
+  <!-- 정산표 탭 -->
+  <div id="tab-table" class="hidden">
+    <div id="filterBar" class="filter-bar"></div>
+    <div class="card">
+      <div class="table-header">
+        <div class="card-title" style="margin-bottom:0">정산 내역</div>
+        <button class="btn-secondary" onclick="downloadCSV()">CSV 다운로드</button>
+      </div>
+      <div class="table-scroll" id="tableBody"></div>
+    </div>
+  </div>
+
+  <!-- 일별 정산표 탭 -->
+  <div id="tab-daily" class="hidden">
+    <div id="dailyBody"></div>
+  </div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('settlements') || '[]');
+let editIndex = null;
+let filterNickname = null;
+
+const $ = id => document.getElementById(id);
+
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function parseNumber(str) {
+  return parseFloat(str.replace(/,/g, '')) || 0;
+}
+
+function setupCommaInput(el) {
+  el.addEventListener('input', function() {
+    const cursor = this.selectionStart;
+    const oldLen = this.value.length;
+    const raw = this.value.replace(/,/g, '').replace(/[^\d]/g, '');
+    if (!raw) { this.value = ''; calculate(); return; }
+    this.value = formatNumber(raw);
+    const newLen = this.value.length;
+    this.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
+    calculate();
+  });
+}
+
+setupCommaInput($('rate'));
+setupCommaInput($('krw'));
+
+['csFee', 'samgukFee', 'refFee'].forEach(id => {
+  $(id).addEventListener('input', calculate);
+});
+
+function calculate() {
+  const rate = parseNumber($('rate').value);
+  const krw = parseNumber($('krw').value);
+  const csFee = parseFloat($('csFee').value) || 0;
+  const samgukFee = parseFloat($('samgukFee').value) || 0;
+  const refFee = parseFloat($('refFee').value) || 0;
+
+  const totalUSDT = rate ? krw / rate : 0;
+  const cs = totalUSDT * (csFee / 100);
+  const samguk = totalUSDT * (samgukFee / 100);
+  const ref = totalUSDT * (refFee / 100);
+  const profit = cs - samguk - ref;
+
+  $('totalUSDT').textContent = formatNumber(Math.floor(totalUSDT));
+  $('csResult').textContent = formatNumber(Math.floor(cs)) + ' USDT';
+  $('samgukResult').textContent = formatNumber(Math.floor(samguk)) + ' USDT';
+  $('refResult').textContent = formatNumber(Math.floor(ref)) + ' USDT';
+  $('profitDisplay').textContent = formatNumber(Math.floor(profit)) + ' USDT';
+
+  const profitEl = $('profitDisplay');
+  profitEl.classList.toggle('negative', profit < 0);
+  profitEl.classList.toggle('profit', profit >= 0);
+}
+
+function switchTab(tab) {
+  const container = $('mainContainer');
+  const allTabs = ['calc', 'table', 'daily'];
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', allTabs[i] === tab);
+  });
+  allTabs.forEach(t => {
+    $('tab-' + t).classList.toggle('hidden', t !== tab);
+  });
+  container.classList.toggle('wide', tab === 'table');
+  if (tab === 'table') renderTable();
+  if (tab === 'daily') renderDaily();
+}
+
+function saveData() {
+  const nickname = $('nickname').value.trim();
+  if (!nickname) { $('nickname').focus(); return; }
+
+  const rate = parseNumber($('rate').value);
+  const krw = parseNumber($('krw').value);
+  if (!rate || !krw) return;
+
+  const csFee = parseFloat($('csFee').value) || 0;
+  const samgukFee = parseFloat($('samgukFee').value) || 0;
+  const refFee = parseFloat($('refFee').value) || 0;
+
+  const totalUSDT = krw / rate;
+  const cs = totalUSDT * (csFee / 100);
+  const samguk = totalUSDT * (samgukFee / 100);
+  const ref = totalUSDT * (refFee / 100);
+  const profit = cs - samguk - ref;
+
+  const newItem = {
+    date: new Date().toISOString(),
+    nickname, rate, krw, totalUSDT,
+    cs, samguk, ref, profit,
+    isCompleted: false
+  };
+
+  if (editIndex !== null) {
+    data[editIndex] = newItem;
+    editIndex = null;
+    updateEditUI();
+  } else {
+    data.unshift(newItem);
+  }
+
+  localStorage.setItem('settlements', JSON.stringify(data));
+
+  $('nickname').value = '';
+  $('nickname').focus();
+  switchTab('table');
+}
+
+function editItem(index) {
+  const item = data[index];
+  editIndex = index;
+
+  $('nickname').value = item.nickname;
+  $('rate').value = formatNumber(item.rate);
+  $('krw').value = formatNumber(item.krw);
+  $('csFee').value = 0;
+  $('samgukFee').value = 0;
+  $('refFee').value = 0;
+
+  calculate();
+  updateEditUI();
+  switchTab('calc');
+}
+
+function cancelEdit() {
+  editIndex = null;
+  $('nickname').value = '';
+  $('rate').value = '';
+  $('krw').value = '';
+  $('csFee').value = '';
+  $('samgukFee').value = '';
+  $('refFee').value = '';
+  calculate();
+  updateEditUI();
+}
+
+function updateEditUI() {
+  const banner = $('editBanner');
+  const btn = $('saveBtn');
+  if (editIndex !== null) {
+    banner.classList.remove('hidden');
+    btn.textContent = '수정 반영하기';
+    btn.classList.add('editing');
+  } else {
+    banner.classList.add('hidden');
+    btn.textContent = '정산에 반영하기';
+    btn.classList.remove('editing');
+  }
+}
+
+function toggleComplete(index) {
+  data[index].isCompleted = !data[index].isCompleted;
+  localStorage.setItem('settlements', JSON.stringify(data));
+  renderTable();
+}
+
+function setFilter(nickname) {
+  filterNickname = nickname || null;
+  renderTable();
+}
+
+function getFilteredData() {
+  if (!filterNickname) return data;
+  return data.filter(item => item.nickname === filterNickname);
+}
+
+function renderFilter() {
+  const names = [...new Set(data.map(item => item.nickname))];
+  if (!names.length) { $('filterBar').innerHTML = ''; return; }
+  const options = '<option value="">전체</option>' +
+    names.map(name => `<option value="${name}"${filterNickname === name ? ' selected' : ''}>${name}</option>`).join('');
+  $('filterBar').innerHTML = `<select class="filter-select" onchange="setFilter(this.value)">${options}</select>`;
+}
+
+function deleteItem(index) {
+  data.splice(index, 1);
+  localStorage.setItem('settlements', JSON.stringify(data));
+  renderFilter();
+  renderTable();
+}
+
+function renderTable() {
+  renderFilter();
+  const body = $('tableBody');
+  const filtered = getFilteredData();
+  if (!filtered.length) {
+    body.innerHTML = '<div class="empty-state">정산 내역이 없습니다</div>';
+    return;
+  }
+
+  const totals = filtered.reduce((acc, item) => {
+    acc.krw += item.krw;
+    acc.totalUSDT += item.totalUSDT;
+    acc.cs += item.cs;
+    acc.samguk += item.samguk;
+    acc.ref += item.ref;
+    acc.profit += item.profit;
+    return acc;
+  }, { krw: 0, totalUSDT: 0, cs: 0, samguk: 0, ref: 0, profit: 0 });
+
+  const rows = filtered.map(item => {
+    const idx = data.indexOf(item);
+    const d = new Date(item.date);
+    const dateStr = d.getFullYear() + '.' +
+      String(d.getMonth() + 1).padStart(2, '0') + '.' +
+      String(d.getDate()).padStart(2, '0') + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0');
+    const profitClass = item.profit >= 0 ? 'col-profit' : 'col-profit negative';
+    const rowClass = item.isCompleted ? ' class="completed"' : '';
+    const checked = item.isCompleted ? ' checked' : '';
+    return `<tr${rowClass}>
+      <td><input type="checkbox" class="cb-complete" onchange="toggleComplete(${idx})"${checked}></td>
+      <td>${dateStr}</td>
+      <td>${item.nickname}</td>
+      <td>${formatNumber(item.rate)}</td>
+      <td>${formatNumber(item.krw.toLocaleString())}</td>
+      <td>${formatNumber(Math.floor(item.totalUSDT))}</td>
+      <td>${formatNumber(Math.floor(item.cs))}</td>
+      <td>${formatNumber(Math.floor(item.samguk))}</td>
+      <td>${formatNumber(Math.floor(item.ref))}</td>
+      <td class="${profitClass}">${formatNumber(Math.floor(item.profit))}</td>
+      <td><button class="btn-delete" onclick="deleteItem(${idx})">삭제</button></td>
+      <td><button class="btn-edit" onclick="editItem(${idx})">수정</button></td>
+    </tr>`;
+  }).join('');
+
+  const totalProfitClass = totals.profit >= 0 ? 'col-profit' : 'col-profit negative';
+
+  body.innerHTML = `<table class="data-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>일시</th>
+        <th>닉네임</th>
+        <th>시세</th>
+        <th>원화</th>
+        <th>총 USDT</th>
+        <th>CS</th>
+        <th>삼국지</th>
+        <th>소개자</th>
+        <th>수익금</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr class="totals-row">
+        <td colspan="4">전체 누계</td>
+        <td>${formatNumber(totals.krw.toLocaleString())}</td>
+        <td>${formatNumber(Math.floor(totals.totalUSDT))}</td>
+        <td>${formatNumber(Math.floor(totals.cs))}</td>
+        <td>${formatNumber(Math.floor(totals.samguk))}</td>
+        <td>${formatNumber(Math.floor(totals.ref))}</td>
+        <td class="${totalProfitClass}">${formatNumber(Math.floor(totals.profit))}</td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function toggleDaily(dateKey) {
+  const detail = document.querySelector('[data-daily="' + dateKey + '"]');
+  const header = detail.previousElementSibling;
+  if (detail.style.display === 'none') {
+    detail.style.display = 'block';
+    header.classList.add('open');
+  } else {
+    detail.style.display = 'none';
+    header.classList.remove('open');
+  }
+}
+
+function renderDaily() {
+  const body = $('dailyBody');
+  if (!data.length) {
+    body.innerHTML = '<div class="daily-section" style="padding:20px"><div class="empty-state">정산 내역이 없습니다</div></div>';
+    return;
+  }
+
+  const byDate = {};
+  const byMonth = {};
+  data.forEach(item => {
+    const d = item.date.split('T')[0];
+    const m = item.date.slice(0, 7);
+    if (!byDate[d]) byDate[d] = { items: [], krw: 0, usdt: 0, cs: 0, samguk: 0, ref: 0, profit: 0 };
+    byDate[d].items.push(item);
+    byDate[d].krw += item.krw;
+    byDate[d].usdt += item.totalUSDT;
+    byDate[d].cs += item.cs;
+    byDate[d].samguk += item.samguk;
+    byDate[d].ref += item.ref;
+    byDate[d].profit += item.profit;
+
+    if (!byMonth[m]) byMonth[m] = { krw: 0, usdt: 0, profit: 0 };
+    byMonth[m].krw += item.krw;
+    byMonth[m].usdt += item.totalUSDT;
+    byMonth[m].profit += item.profit;
+  });
+
+  const dailyHtml = Object.entries(byDate)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([date, group]) => {
+      const profitClass = group.profit >= 0 ? 'positive' : 'negative';
+      const dateDisplay = date.replace(/-/g, '.');
+
+      const detailRows = group.items.map(item => {
+        const d = new Date(item.date);
+        const timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        return `<tr>
+          <td>${timeStr}</td>
+          <td>${item.nickname}</td>
+          <td>${formatNumber(item.rate)}</td>
+          <td>${formatNumber(item.krw.toLocaleString())}</td>
+          <td>${formatNumber(Math.floor(item.totalUSDT))}</td>
+          <td>${formatNumber(Math.floor(item.cs))}</td>
+          <td>${formatNumber(Math.floor(item.samguk))}</td>
+          <td>${formatNumber(Math.floor(item.ref))}</td>
+          <td class="col-profit${item.profit < 0 ? ' negative' : ''}">${formatNumber(Math.floor(item.profit))}</td>
+        </tr>`;
+      }).join('');
+
+      const totProfitClass = group.profit >= 0 ? 'col-profit' : 'col-profit negative';
+
+      return `<div class="daily-section">
+        <div class="daily-header" onclick="toggleDaily('${date}')">
+          <span><span class="arrow">▶</span> <span class="daily-date">${dateDisplay}</span></span>
+          <span class="daily-amount">${formatNumber(group.krw.toLocaleString())}원 / ${formatNumber(Math.floor(group.usdt))}</span>
+          <span class="daily-profit ${profitClass}">${formatNumber(Math.floor(group.profit))}</span>
+        </div>
+        <div class="daily-detail" data-daily="${date}" style="display:none">
+          <table class="data-table">
+            <thead><tr>
+              <th>시간</th><th>닉네임</th><th>시세</th><th>원화</th>
+              <th>총 USDT</th><th>CS</th><th>삼국지</th><th>소개자</th><th>수익금</th>
+            </tr></thead>
+            <tbody>
+              ${detailRows}
+              <tr class="totals-row">
+                <td colspan="3">일별 누계</td>
+                <td>${formatNumber(Math.floor(group.krw).toLocaleString())}</td>
+                <td>${formatNumber(Math.floor(group.usdt))}</td>
+                <td>${formatNumber(Math.floor(group.cs))}</td>
+                <td>${formatNumber(Math.floor(group.samguk))}</td>
+                <td>${formatNumber(Math.floor(group.ref))}</td>
+                <td class="${totProfitClass}">${formatNumber(Math.floor(group.profit))}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+
+  const monthlyHtml = Object.entries(byMonth)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([month, t]) => {
+      const profitClass = t.profit >= 0 ? 'positive' : 'negative';
+      return `<div class="monthly-row">
+        <span class="daily-date">${month.replace(/-/g, '.')}</span>
+        <span class="daily-amount">${formatNumber(t.krw.toLocaleString())}원 / ${formatNumber(Math.floor(t.usdt))}</span>
+        <span class="daily-profit ${profitClass}">${formatNumber(Math.floor(t.profit))}</span>
+      </div>`;
+    }).join('');
+
+  body.innerHTML = `
+    <div class="section-title">일별 정산표</div>
+    ${dailyHtml}
+    <div class="section-title mt">월별 정산표</div>
+    <div class="monthly-section">${monthlyHtml}</div>
+  `;
+}
+
+function downloadCSV() {
+  const BOM = '\uFEFF';
+  const headers = ['날짜','닉네임','시세','원화','총USDT','CS','삼국지','소개자','수익금'];
+  const rows = data.map(i => [
+    i.date, i.nickname, i.rate, i.krw,
+    Math.floor(i.totalUSDT), Math.floor(i.cs),
+    Math.floor(i.samguk), Math.floor(i.ref), Math.floor(i.profit)
+  ]);
+  const csv = BOM + [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'settlement.csv';
+  link.click();
+}
+</script>
+</body>
+</html>
